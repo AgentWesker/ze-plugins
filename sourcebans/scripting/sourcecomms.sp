@@ -2250,7 +2250,7 @@ stock CreateBlock(client, targetId = 0, length = -1, type, const String:sReason[
 		}
 		SavePunishment(client, target_list[0], type, length, reason);
 	}
-	if (target_count > 1 || !skipped)
+	if (target_count > 1 || skipped)
 	{
 		switch (type)
 		{
