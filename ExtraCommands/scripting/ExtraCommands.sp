@@ -28,7 +28,7 @@ public Plugin myinfo =
 	name 		= "Advanced Commands",
 	author 		= "BotoX + Obus",
 	description	= "Adds extra commands for admins.",
-	version 	= "2.1.2",
+	version 	= "2.1.3",
 	url 		= "https://github.com/CSSZombieEscape/sm-plugins/tree/master/ExtraCommands/"
 };
 
@@ -263,16 +263,12 @@ public Action Command_Health(int client, int argc)
 		SetEntProp(iTargets[i], Prop_Send, "m_iHealth", amount, 1);
 	}
 
-	if(bIsML)
-	{
-		ShowActivity2(client, "\x01[SM] \x04", "\x01Set health to \x04%d\x01 on target \x04%s", amount, sTargetName);
+	ShowActivity2(client, "\x01[SM] \x04", "\x01Set health to \x04%d\x01 on target \x04%s", amount, sTargetName);
+
+	if(iTargetCount > 1)
 		LogAction(client, -1, "\"%L\" set health to \"%d\" on target \"%s\"", client, amount, sTargetName);
-	}
 	else
-	{
-		ShowActivity2(client, "\x01[SM] \x04", "\x01Set health to \x04%d\x01 on target \x04%s", amount, sTargetName);
 		LogAction(client, iTargets[0], "\"%L\" set health to \"%d\" on target \"%L\"", client, amount, iTargets[0]);
-	}
 
 	return Plugin_Handled;
 }
@@ -308,16 +304,12 @@ public Action Command_Armor(int client, int argc)
 		SetEntProp(iTargets[i], Prop_Send, "m_ArmorValue", amount, 1);
 	}
 
-	if(bIsML)
-	{
-		ShowActivity2(client, "\x01[SM] \x04", "\x01Set kevlar to \x04%d\x01 on target \x04%s", amount, sTargetName);
+	ShowActivity2(client, "\x01[SM] \x04", "\x01Set kevlar to \x04%d\x01 on target \x04%s", amount, sTargetName);
+
+	if(iTargetCount > 1)
 		LogAction(client, -1, "\"%L\" set kevlar to \"%d\" on target \"%s\"", client, amount, sTargetName);
-	}
 	else
-	{
-		ShowActivity2(client, "\x01[SM] \x04", "\x01Set kevlar to \x04%d\x01 on target \x04%s", amount, sTargetName);
 		LogAction(client, iTargets[0], "\"%L\" set kevlar to \"%d\" on target \"%L\"", client, amount, iTargets[0]);
-	}
 
 	return Plugin_Handled;
 }
@@ -451,16 +443,12 @@ public Action Command_Weapon(int client, int argc)
 		}
 	}
 
-	if(bIsML)
-	{
-		ShowActivity2(client, "\x01[SM] \x04", "\x01Gave \x04%s\x01 to target \x04%s", sWeapon, sTargetName);
+	ShowActivity2(client, "\x01[SM] \x04", "\x01Gave \x04%s\x01 to target \x04%s", sWeapon, sTargetName);
+
+	if(iTargetCount > 1)
 		LogAction(client, -1, "\"%L\" gave \"%s\" to target \"%s\"", client, sWeapon, sTargetName);
-	}
 	else
-	{
-		ShowActivity2(client, "\x01[SM] \x04", "\x01Gave \x04%s\x01 to target \x04%s", sWeapon, sTargetName);
 		LogAction(client, iTargets[0], "\"%L\" gave \"%s\" to target \"%L\"", client, sWeapon, iTargets[0]);
-	}
 
 	return Plugin_Handled;
 }
@@ -504,17 +492,13 @@ public Action Command_Strip(int client, int argc)
 		}
 	}
 
-	if(bIsML)
-	{
-		ShowActivity2(client, "\x01[SM] \x04", "\x01Stripped all weapons from target \x04%s", sTargetName);
+	ShowActivity2(client, "\x01[SM] \x04", "\x01Stripped all weapons from target \x04%s", sTargetName);
+
+	if(iTargetCount > 1)
 		LogAction(client, -1, "\"%L\" stripped all weapons from target \"%s\"", client, sTargetName);
-	}
 	else
-	{
-		ShowActivity2(client, "\x01[SM] \x04", "\x01Stripped all weapons from target \x04%s", sTargetName);
 		LogAction(client, iTargets[0], "\"%L\" stripped all weapons from target \"%L\"", client, iTargets[0]);
-	}
-	
+
 	return Plugin_Handled;
 }
 
@@ -690,16 +674,12 @@ public Action Command_Speed(int client, int argc)
 		SetEntPropFloat(iTargets[i], Prop_Data, "m_flLaggedMovementValue", speed);
 	}
 
-	if(bIsML)
-	{
-		ShowActivity2(client, "\x01[SM] \x04", "\x01Set speed to \x04%.2f\x01 on target \x04%s", speed, sTargetName);
+	ShowActivity2(client, "\x01[SM] \x04", "\x01Set speed to \x04%.2f\x01 on target \x04%s", speed, sTargetName);
+
+	if(iTargetCount > 1)
 		LogAction(client, -1, "\"%L\" set speed to \"%.2f\" on target \"%s\"", client, speed, sTargetName);
-	}
 	else
-	{
-		ShowActivity2(client, "\x01[SM] \x04", "\x01Set speed to \x04%.2f\x01 on target \x04%s", speed, sTargetName);
 		LogAction(client, iTargets[0], "\"%L\" set speed to \"%.2f\" on target \"%L\"", client, speed, iTargets[0]);
-	}
 
 	return Plugin_Handled;
 }
@@ -776,16 +756,12 @@ public Action Command_Cash(int client, int argc)
 		SetEntProp(iTargets[i], Prop_Send, "m_iAccount", iCash);
 	}
 
-	if(bIsML)
-	{
-		ShowActivity2(client, "\x01[SM] \x04", "\x01Set cash to \x04%d\x01 on target \x04%s", iCash, sTargetName);
+	ShowActivity2(client, "\x01[SM] \x04", "\x01Set cash to \x04%d\x01 on target \x04%s", iCash, sTargetName);
+
+	if(iTargetCount > 1)
 		LogAction(client, -1, "\"%L\" set cash to \"%d\" on target \"%s\"", client, iCash, sTargetName);
-	}
 	else
-	{
-		ShowActivity2(client, "\x01[SM] \x04", "\x01Set cash to \x04%d\x01 on target \x04%s", iCash, sTargetName);
 		LogAction(client, iTargets[0], "\"%L\" set cash to \"%d\" on target \"%L\"", client, iCash, iTargets[0]);
-	}
 
 	return Plugin_Handled;
 }
@@ -821,16 +797,12 @@ public Action Command_ModelScale(int client, int argc)
 		SetEntPropFloat(iTargets[i], Prop_Send, "m_flModelScale", fScale);
 	}
 
-	if(bIsML)
-	{
-		ShowActivity2(client, "\x01[SM] \x04", "\x01Set model scale to \x04%.2f\x01 on target \x04%s", fScale, sTargetName);
+	ShowActivity2(client, "\x01[SM] \x04", "\x01Set model scale to \x04%.2f\x01 on target \x04%s", fScale, sTargetName);
+
+	if(iTargetCount > 1)
 		LogAction(client, -1, "\"%L\" set model scale to \"%.2f\" on target \"%s\"", client, fScale, sTargetName);
-	}
 	else
-	{
-		ShowActivity2(client, "\x01[SM] \x04", "\x01Set model scale to \x04%.2f\x01 on target \x04%s", fScale, sTargetName);
 		LogAction(client, iTargets[0], "\"%L\" set model scale to \"%.2f\" on target \"%L\"", client, fScale, iTargets[0]);
-	}
 
 	return Plugin_Handled;
 }
@@ -877,16 +849,12 @@ public Action Command_SetModel(int client, int argc)
 		SetEntityModel(iTargets[i], sArgs2);
 	}
 
-	if(bIsML)
-	{
-		ShowActivity2(client, "\x01[SM] \x04", "\x01Set model to \x04%s\x01 on target \x04%s", sArgs2, sTargetName);
+	ShowActivity2(client, "\x01[SM] \x04", "\x01Set model to \x04%s\x01 on target \x04%s", sArgs2, sTargetName);
+
+	if(iTargetCount > 1)
 		LogAction(client, -1, "\"%L\" set model to \"%s\" on target \"%s\"", client, sArgs2, sTargetName);
-	}
 	else
-	{
-		ShowActivity2(client, "\x01[SM] \x04", "\x01Set model to \x04%s\x01 on target \x04%s", sArgs2, sTargetName);
 		LogAction(client, iTargets[0], "\"%L\" set model to \"%s\" on target \"%L\"", client, sArgs2, iTargets[0]);
-	}
 
 	return Plugin_Handled;
 }
@@ -922,16 +890,12 @@ public Action Command_SetScore(int client, int argc)
 		SetEntProp(iTargets[i], Prop_Data, "m_iFrags", iVal);
 	}
 
-	if(bIsML)
-	{
-		ShowActivity2(client, "\x01[SM] \x04", "\x01Set score to \x04%d\x01 on target \x04%s", iVal, sTargetName);
+	ShowActivity2(client, "\x01[SM] \x04", "\x01Set score to \x04%d\x01 on target \x04%s", iVal, sTargetName);
+
+	if(iTargetCount > 1)
 		LogAction(client, -1, "\"%L\" set score to \"%d\" on target \"%s\"", client, iVal, sTargetName);
-	}
 	else
-	{
-		ShowActivity2(client, "\x01[SM] \x04", "\x01Set score to \x04%d\x01 on target \x04%s", iVal, sTargetName);
 		LogAction(client, iTargets[0], "\"%L\" set score to \"%d\" on target \"%L\"", client, iVal, iTargets[0]);
-	}
 
 	return Plugin_Handled;
 }
@@ -967,7 +931,7 @@ public Action Command_SetDeaths(int client, int argc)
 		SetEntProp(iTargets[i], Prop_Data, "m_iDeaths", iVal);
 	}
 
-	if(bIsML)
+	if(iTargetCount > 1)
 	{
 		ShowActivity2(client, "\x01[SM] \x04", "\x01Set deaths to \x04%d\x01 on target \x04%s", iVal, sTargetName);
 		LogAction(client, -1, "\"%L\" set deaths to \"%d\" on target \"%s\"", client, iVal, sTargetName);
@@ -1161,7 +1125,7 @@ public Action Command_SetClanTag(int client, int argc)
 
 public Action Command_FakeCommand(int client, int argc)
 {
-	if (argc < 2)
+	if(argc < 2)
 	{
 		ReplyToCommand(client, "[SM] Usage: sm_fakecommand <#userid|name> [command] [args]");
 		return Plugin_Handled;
