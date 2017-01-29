@@ -28,10 +28,10 @@ public Plugin myinfo =
 	name 		= "Advanced Commands",
 	author 		= "BotoX + Obus",
 	description	= "Adds extra commands for admins.",
-	version 	= "2.1.0",
+	version 	= "2.1.2",
 	url 		= "https://github.com/CSSZombieEscape/sm-plugins/tree/master/ExtraCommands/"
 };
- 
+
 public void OnPluginStart()
 {
 	LoadTranslations("common.phrases");
@@ -51,13 +51,14 @@ public void OnPluginStart()
 	RegAdminCmd("sm_resize", Command_ModelScale, ADMFLAG_GENERIC, "sm_resize <#userid|name> <scale>");
 	RegAdminCmd("sm_setmodel", Command_SetModel, ADMFLAG_GENERIC, "sm_setmodel <#userid|name> <modelpath>");
 	RegAdminCmd("sm_setscore", Command_SetScore, ADMFLAG_GENERIC, "sm_setscore <#userid|name> <value>");
-	RegAdminCmd("sm_setdeath", Command_SetDeath, ADMFLAG_GENERIC, "sm_setdeath <#userid|name> <value>");
+	RegAdminCmd("sm_setdeaths", Command_SetDeaths, ADMFLAG_GENERIC, "sm_setdeaths <#userid|name> <value>");
 	RegAdminCmd("sm_setteamscore", Command_SetTeamScore, ADMFLAG_GENERIC, "sm_setteamscore <team> <value>");
 	RegAdminCmd("sm_waila", Command_WAILA, ADMFLAG_GENERIC);
 	RegAdminCmd("sm_info", Command_WAILA, ADMFLAG_GENERIC);
 	RegAdminCmd("sm_fcvar", Command_ForceCVar, ADMFLAG_CHEATS, "sm_fcvar <#userid|name> <cvar> <value>");
 	RegAdminCmd("sm_setclantag", Command_SetClanTag, ADMFLAG_CHEATS, "sm_setclantag <#userid|name> [text]");
 	RegAdminCmd("sm_fakecommand", Command_FakeCommand, ADMFLAG_CHEATS, "sm_fakecommand <#userid|name> [command] [args]");
+	RegAdminCmd("sm_querycvar", Command_QueryCVar, ADMFLAG_GENERIC, "sm_querycvar <#userid|name> [cvar]");
 
 	HookEvent("bomb_planted", Event_BombPlanted, EventHookMode_Pre);
 	HookEvent("bomb_defused", Event_BombDefused, EventHookMode_Pre);
@@ -935,11 +936,11 @@ public Action Command_SetScore(int client, int argc)
 	return Plugin_Handled;
 }
 
-public Action Command_SetDeath(int client, int argc)
+public Action Command_SetDeaths(int client, int argc)
 {
 	if(argc < 2)
 	{
-		ReplyToCommand(client, "[SM] Usage: sm_setdeath <#userid|name> <value>");
+		ReplyToCommand(client, "[SM] Usage: sm_setdeaths <#userid|name> <value>");
 		return Plugin_Handled;
 	}
 
@@ -968,13 +969,13 @@ public Action Command_SetDeath(int client, int argc)
 
 	if(bIsML)
 	{
-		ShowActivity2(client, "\x01[SM] \x04", "\x01Set death to \x04%d\x01 on target \x04%s", iVal, sTargetName);
-		LogAction(client, -1, "\"%L\" set death to \"%d\" on target \"%s\"", client, iVal, sTargetName);
+		ShowActivity2(client, "\x01[SM] \x04", "\x01Set deaths to \x04%d\x01 on target \x04%s", iVal, sTargetName);
+		LogAction(client, -1, "\"%L\" set deaths to \"%d\" on target \"%s\"", client, iVal, sTargetName);
 	}
 	else
 	{
-		ShowActivity2(client, "\x01[SM] \x04", "\x01Set death to \x04%d\x01 on target \x04%s", iVal, sTargetName);
-		LogAction(client, iTargets[0], "\"%L\" set death to \"%d\" on target \"%L\"", client, iVal, iTargets[0]);
+		ShowActivity2(client, "\x01[SM] \x04", "\x01Set deaths to \x04%d\x01 on target \x04%s", iVal, sTargetName);
+		LogAction(client, iTargets[0], "\"%L\" set deaths to \"%d\" on target \"%L\"", client, iVal, iTargets[0]);
 	}
 
 	return Plugin_Handled;
@@ -1204,6 +1205,54 @@ public Action Command_FakeCommand(int client, int argc)
 	}
 
 	return Plugin_Handled;
+}
+
+public Action Command_QueryCVar(int client, int argc)
+{
+	if(argc < 2)
+	{
+		ReplyToCommand(client, "[SM] Usage: sm_querycvar <#userid|name> [cvar]");
+		return Plugin_Handled;
+	}
+
+	char sArg[64];
+	char sArg2[64];
+	int iTarget;
+
+	GetCmdArg(1, sArg, sizeof(sArg));
+	GetCmdArg(2, sArg2, sizeof(sArg2));
+
+	if((iTarget = FindTarget(client, sArg, true)) <= 0)
+		return Plugin_Handled;
+
+	if(QueryClientConVar(iTarget, sArg2, ConVarQueryFinished_QueryCVar, client) == QUERYCOOKIE_FAILED)
+		ReplyToCommand(client, "[SM] Failed to query cvar \"%s\"", sArg2);
+
+	return Plugin_Handled;
+}
+
+public void ConVarQueryFinished_QueryCVar(QueryCookie hCookie, int client, ConVarQueryResult res, const char[] sCVarName, const char[] sCVarValue, int admin)
+{
+	switch(res)
+	{
+		case ConVarQuery_NotFound:
+		{
+			ReplyToCommand(admin, "[SM] No such cvar.");
+			return;
+		}
+		case ConVarQuery_NotValid:
+		{
+			ReplyToCommand(admin, "[SM] Commands can not be queried.");
+			return;
+		}
+		case ConVarQuery_Protected:
+		{
+			ReplyToCommand(admin, "[SM] That cvar is protected and can not be queried.");
+			return;
+		}
+	}
+
+	ReplyToCommand(admin, "[SM] Value for cvar \"%s\" on client \"%N\" is \"%s\".", sCVarName, client, sCVarValue);
 }
 
 stock any clamp(any input, any min, any max)

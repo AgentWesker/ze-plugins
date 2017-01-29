@@ -10,8 +10,8 @@ public Plugin myinfo =
 	name 		= "Teleport Commands",
 	author		= "Obus",
 	description	= "Adds commands to teleport clients.",
-	version		= "1.2",
-	url		= "https://github.com/CSSZombieEscape/sm-plugins/blob/master/Teleport/"
+	version		= "1.3.1",
+	url			= "https://github.com/CSSZombieEscape/sm-plugins/blob/master/Teleport/"
 }
 
 public void OnPluginStart()
@@ -62,7 +62,11 @@ public Action Command_Bring(int client, int argc)
 	}
 
 	ShowActivity2(client, "\x01[SM] \x04", "\x01Brought \x04%s\x01", sTargetName);
-	LogAction(client, -1, "\"%L\" brought \"%s\"", client, sTargetName);
+
+	if (iTargetCount > 1)
+		LogAction(client, -1, "\"%L\" brought \"%s\"", client, sTargetName);
+	else
+		LogAction(client, iTargets[0], "\"%L\" brought \"%L\"", client, iTargets[0]);
 
 	return Plugin_Handled;
 }
@@ -199,7 +203,11 @@ public Action Command_Send(int client, int argc)
 
 		ShowActivity3(client, "\x01[SM] \x04", "\x01Teleported \x04%s\x01 to their aimpoint.", sTargetName);
 		ReplyToCommand(client, "\x01[SM] Teleported \x04%s\x01 to your aimpoint.", sTargetName);
-		LogAction(client, -1, "\"%L\" teleported target \"%s\" to their aimpoint", client, sTargetName);
+
+		if (iTargetCount > 1)
+			LogAction(client, -1, "\"%L\" teleported target \"%s\" to their aimpoint", client, sTargetName);
+		else
+			LogAction(client, iTargets[0], "\"%L\" teleported target \"%L\" to their aimpoint", client, iTargets[0]);
 
 		return Plugin_Handled;
 	}
@@ -217,7 +225,11 @@ public Action Command_Send(int client, int argc)
 	}
 
 	ShowActivity2(client, "\x01[SM] \x04", "\x01Teleported \x04%s\x01 to \x04%N\x01.", sTargetName, iTarget);
-	LogAction(client, iTarget, "\"%L\" teleported target \"%s\" to \"%L\"", client, sTargetName, iTarget);
+
+	if (iTargetCount > 1)
+		LogAction(client, -1, "\"%L\" teleported target \"%s\" to \"%L\"", client, sTargetName, iTarget);
+	else
+		LogAction(client, iTargets[0], "\"%L\" teleported target \"%L\" to \"%L\"", client, iTargets[0], iTarget);
 
 	return Plugin_Handled;
 }
@@ -255,7 +267,11 @@ public Action Command_TpAim(int client, int argc)
 
 	ShowActivity3(client, "\x01[SM] \x04", "\x01Teleported \x04%s\x01 to their aimpoint.", sTargetName);
 	ReplyToCommand(client, "\x01[SM] Teleported \x04%s\x01 to your aimpoint.", sTargetName);
-	LogAction(client, -1, "\"%L\" teleported \"%s\" to their aimpoint", client, sTargetName);
+
+	if (iTargetCount > 1)
+		LogAction(client, -1, "\"%L\" teleported \"%s\" to their aimpoint", client, sTargetName);
+	else
+		LogAction(client, iTargets[0], "\"%L\" teleported \"%L\" to their aimpoint", client, iTargets[0]);
 
 	return Plugin_Handled;
 }

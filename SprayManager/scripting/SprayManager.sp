@@ -73,7 +73,7 @@ public Plugin myinfo =
 	name		= "Spray Manager",
 	description	= "A plugin to help manage player sprays.",
 	author		= "Obus",
-	version		= "2.0.0",
+	version		= "2.0.5",
 	url			= "https://github.com/CSSZombieEscape/sm-plugins/tree/master/SprayManager"
 }
 
@@ -124,7 +124,7 @@ public void OnPluginStart()
 
 	g_cvarMaxSprayLifetime = CreateConVar("sm_spraymanager_maxspraylifetime", "2", "If not using persistent sprays, remove sprays after their global lifetime (in rounds) exceeds this number");
 
-	AutoExecConfig(true, "plugin.spraymanager");
+	AutoExecConfig(true, "plugin.SprayManager");
 
 	g_hTraceTimer = CreateTimer(0.25, Timer_PerformPlayerTraces, _, TIMER_REPEAT);
 
@@ -158,6 +158,7 @@ public void OnPluginEnd()
 
 	RemoveTempEntHook("Player Decal", HookDecal);
 	RemoveNormalSoundHook(HookSprayer);
+	UnhookConVarChange(g_cvarHookedDecalFrequency, ConVarChanged_DecalFrequency);
 
 	if (g_hDatabase != null)
 	{
@@ -232,8 +233,9 @@ public void OnClientDisconnect(int client)
 {
 	if (IsValidClient(client))
 	{
-		g_iAllowSpray = client;
+		g_bSkipDecalHook = true;
 		SprayClientDecalToAll(client, 0, ACTUAL_NULL_VECTOR);
+		g_bSkipDecalHook = false;
 	}
 
 	ClearPlayerInfo(client);
@@ -556,7 +558,7 @@ int MenuHandler_Menu_Trace(Menu hMenu, MenuAction action, int iParam1, int iPara
 
 					case 5:
 					{
-						if (BanClientSpray(target, iParam1))
+						if (BanClientSpray(iParam1, target))
 						{
 							ShowActivity2(iParam1, "\x01\x04[SprayManager] ", "\x01Banned \x04%N\x01's spray", target);
 							LogAction(iParam1, target, "\"%L\" banned \"%L\"'s spray", iParam1, target);
@@ -639,7 +641,7 @@ int MenuHandler_Menu_Trace_SprayBan(Menu hMenu, MenuAction action, int iParam1, 
 				if (SprayBanClient(iParam1, target, StringToInt(sOption), "Inappropriate Spray"))
 				{
 					ShowActivity2(iParam1, "\x01\x04[SprayManager] ", "\x01Spray banned \x04%N", target);
-					LogAction(iParam1, target, "\"%L\" spray banned \"%L\"", iParam1, target);
+					LogAction(iParam1, target, "\"%L\" spray banned \"%L\" (Hash: \"%s\")", iParam1, target, g_sSprayHash[target]);
 				}
 
 				g_iSprayBanTarget[iParam1] = 0;
@@ -917,7 +919,7 @@ int MenuHandler_Menu_SprayBan_Length(Menu hMenu, MenuAction action, int iParam1,
 				if (SprayBanClient(iParam1, target, StringToInt(sOption), "Inappropriate Spray"))
 				{
 					ShowActivity2(iParam1, "\x01\x04[SprayManager] ", "\x01Spray banned \x04%N", target);
-					LogAction(iParam1, target, "\"%L\" spray banned \"%L\"", iParam1, target);
+					LogAction(iParam1, target, "\"%L\" spray banned \"%L\" (Hash: \"%s\")", iParam1, target, g_sSprayHash[target]);
 				}
 
 				g_iSprayBanTarget[iParam1] = 0;
@@ -990,7 +992,7 @@ int MenuHandler_Menu_BanSpray(Menu hMenu, MenuAction action, int iParam1, int iP
 			}
 			else
 			{
-				if (BanClientSpray(target, iParam1))
+				if (BanClientSpray(iParam1, target))
 				{
 					ShowActivity2(iParam1, "\x01\x04[SprayManager] ", "\x01Banned \x04%N\x01's spray", target);
 					LogAction(iParam1, target, "\"%L\" banned \"%L\"'s spray", iParam1, target);
@@ -1422,7 +1424,7 @@ public Action Command_SprayBan(int client, int argc)
 		return Plugin_Handled;
 
 	ShowActivity2(client, "\x01\x04[SprayManager] ", "\x01Spray banned \x04%N", iTarget);
-	LogAction(client, iTarget, "\"%L\" spray banned \"%L\"", client, iTarget);
+	LogAction(client, iTarget, "\"%L\" spray banned \"%L\" (Hash: \"%s\")", client, iTarget, g_sSprayHash[iTarget]);
 
 	return Plugin_Handled;
 }
@@ -1813,14 +1815,14 @@ public Action Timer_ProcessPersistentSprays(Handle hThis)
 			if (!IsValidClient(x) || IsFakeClient(x))
 				continue;
 
-			if (!IsVectorZero(g_vecSprayOrigin[i]))
-				g_iClientToClientSprayLifetime[x][i]++;
+			if (!IsVectorZero(g_vecSprayOrigin[x]))
+				g_iClientToClientSprayLifetime[i][x]++;
 
-			if (g_iClientToClientSprayLifetime[x][i] >= g_iClientSprayLifetime[x])
+			if (g_iClientToClientSprayLifetime[i][x] >= g_iClientSprayLifetime[i])
 			{
 				g_bSkipDecalHook = true;
-				SprayClientDecalToOne(i, x, g_iDecalEntity[i], g_vecSprayOrigin[i]);
-				g_iClientToClientSprayLifetime[x][i] = 0;
+				SprayClientDecalToOne(x, i, g_iDecalEntity[x], g_vecSprayOrigin[x]);
+				g_iClientToClientSprayLifetime[i][x] = 0;
 				g_bSkipDecalHook = false;
 			}
 		}
@@ -2450,6 +2452,7 @@ void ClearPlayerInfo(int client)
 	g_iSprayUnbanTimestamp[client] = -1;
 	g_fNextSprayTime[client] = 0.0;
 	g_vecSprayOrigin[client] = ACTUAL_NULL_VECTOR;
+	g_SprayAABB[client] = view_as<float>({ 0.0, 0.0, 0.0, 0.0, 0.0, 0.0 }); //???
 }
 
 void UpdateClientToClientSprayLifeTime(int client, int iLifeTime)
