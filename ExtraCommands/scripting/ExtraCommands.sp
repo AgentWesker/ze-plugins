@@ -31,7 +31,7 @@ public Plugin myinfo =
 	version 	= "2.1.0",
 	url 		= "https://github.com/CSSZombieEscape/sm-plugins/tree/master/ExtraCommands/"
 };
-
+ 
 public void OnPluginStart()
 {
 	LoadTranslations("common.phrases");
@@ -51,6 +51,7 @@ public void OnPluginStart()
 	RegAdminCmd("sm_resize", Command_ModelScale, ADMFLAG_GENERIC, "sm_resize <#userid|name> <scale>");
 	RegAdminCmd("sm_setmodel", Command_SetModel, ADMFLAG_GENERIC, "sm_setmodel <#userid|name> <modelpath>");
 	RegAdminCmd("sm_setscore", Command_SetScore, ADMFLAG_GENERIC, "sm_setscore <#userid|name> <value>");
+	RegAdminCmd("sm_setdeath", Command_SetDeath, ADMFLAG_GENERIC, "sm_setdeath <#userid|name> <value>");
 	RegAdminCmd("sm_setteamscore", Command_SetTeamScore, ADMFLAG_GENERIC, "sm_setteamscore <team> <value>");
 	RegAdminCmd("sm_waila", Command_WAILA, ADMFLAG_GENERIC);
 	RegAdminCmd("sm_info", Command_WAILA, ADMFLAG_GENERIC);
@@ -929,6 +930,51 @@ public Action Command_SetScore(int client, int argc)
 	{
 		ShowActivity2(client, "\x01[SM] \x04", "\x01Set score to \x04%d\x01 on target \x04%s", iVal, sTargetName);
 		LogAction(client, iTargets[0], "\"%L\" set score to \"%d\" on target \"%L\"", client, iVal, iTargets[0]);
+	}
+
+	return Plugin_Handled;
+}
+
+public Action Command_SetDeath(int client, int argc)
+{
+	if(argc < 2)
+	{
+		ReplyToCommand(client, "[SM] Usage: sm_setdeath <#userid|name> <value>");
+		return Plugin_Handled;
+	}
+
+	char sArgs[32];
+	char sArgs2[32];
+	char sTargetName[MAX_TARGET_LENGTH];
+	int iTargets[MAXPLAYERS];
+	int iTargetCount;
+	bool bIsML;
+
+	GetCmdArg(1, sArgs, sizeof(sArgs));
+	GetCmdArg(2, sArgs2, sizeof(sArgs2));
+
+	int iVal = StringToInt(sArgs2);
+
+	if((iTargetCount = ProcessTargetString(sArgs, client, iTargets, MAXPLAYERS, 0, sTargetName, sizeof(sTargetName), bIsML)) <= 0)
+	{
+		ReplyToTargetError(client, iTargetCount);
+		return Plugin_Handled;
+	}
+
+	for(int i = 0; i < iTargetCount; i++)
+	{
+		SetEntProp(iTargets[i], Prop_Data, "m_iDeaths", iVal);
+	}
+
+	if(bIsML)
+	{
+		ShowActivity2(client, "\x01[SM] \x04", "\x01Set death to \x04%d\x01 on target \x04%s", iVal, sTargetName);
+		LogAction(client, -1, "\"%L\" set death to \"%d\" on target \"%s\"", client, iVal, sTargetName);
+	}
+	else
+	{
+		ShowActivity2(client, "\x01[SM] \x04", "\x01Set death to \x04%d\x01 on target \x04%s", iVal, sTargetName);
+		LogAction(client, iTargets[0], "\"%L\" set death to \"%d\" on target \"%L\"", client, iVal, iTargets[0]);
 	}
 
 	return Plugin_Handled;
