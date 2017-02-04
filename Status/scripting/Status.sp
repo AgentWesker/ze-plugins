@@ -98,10 +98,10 @@ public Action Command_Status(int client, const char[] command, int args)
 		sServerName);
 
 #if defined _serverfps_included
-	PrintToConsole(client, "tickrate : %.2f/%.2f (%d%%%%)",
+	PrintToConsole(client, "tickrate : %.2f/%.2f (%d%%)",
 		fServerFPS, fServerTickRate, RoundToNearest((fServerFPS / fServerTickRate) * 100));
 #else
-	PrintToConsole(client, "tickrate : %d/%d (%d%%%%)",
+	PrintToConsole(client, "tickrate : %d/%d (%d%%)",
 		iTickRate, iServerTickRate, RoundToNearest((float(iTickRate) / float(iServerTickRate)) * 100));
 #endif
 

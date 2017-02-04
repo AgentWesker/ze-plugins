@@ -142,8 +142,8 @@ public Action Command_ForceInput(int client, int args)
 		int entity = INVALID_ENT_REFERENCE;
 		while((entity = FindEntityByClassname(entity, "*")) != INVALID_ENT_REFERENCE)
 		{
-			static char sClassname[64];
-			static char sTargetname[64];
+			char sClassname[64];
+			char sTargetname[64];
 			GetEntPropString(entity, Prop_Data, "m_iClassname", sClassname, sizeof(sClassname));
 			GetEntPropString(entity, Prop_Data, "m_iName", sTargetname, sizeof(sTargetname));
 
