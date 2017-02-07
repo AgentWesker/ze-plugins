@@ -15,12 +15,16 @@ public Plugin myinfo =
 	name = "GlowColors",
 	author = "BotoX",
 	description = "Change your clients colors.",
-	version = "1.0",
+	version = "1.1",
 	url = ""
 }
 
 Menu g_GlowColorsMenu;
 Handle g_hClientCookie = INVALID_HANDLE;
+
+ConVar g_Cvar_MinBrightness;
+Regex g_Regex_RGB;
+Regex g_Regex_HEX;
 
 int g_aGlowColor[MAXPLAYERS + 1][3];
 float g_aRainbowFrequency[MAXPLAYERS + 1];
@@ -28,6 +32,9 @@ float g_aRainbowFrequency[MAXPLAYERS + 1];
 public void OnPluginStart()
 {
 	g_hClientCookie = RegClientCookie("glowcolor", "", CookieAccess_Protected);
+
+	g_Regex_RGB = CompileRegex("^(([01]?[0-9]?[0-9]|2[0-4][0-9]|25[0-5])\\s+){2}([01]?[0-9]?[0-9]|2[0-4][0-9]|25[0-5])$");
+	g_Regex_HEX = CompileRegex("^(#?)([A-Fa-f0-9]{6})$");
 
 	RegAdminCmd("sm_glowcolors", Command_GlowColors, ADMFLAG_CUSTOM5, "Change your players glowcolor. sm_glowcolors <RRGGBB HEX | 0-255 0-255 0-255 RGB CODE>");
 	RegAdminCmd("sm_glowcolours", Command_GlowColors, ADMFLAG_CUSTOM5, "Change your players glowcolor. sm_glowcolours <RRGGBB HEX | 0-255 0-255 0-255 RGB CODE>");
@@ -43,6 +50,8 @@ public void OnPluginStart()
 
 	HookEvent("player_spawn", Event_ApplyGlowcolor, EventHookMode_Post);
 	HookEvent("player_team", Event_ApplyGlowcolor, EventHookMode_Post);
+
+	g_Cvar_MinBrightness = CreateConVar("sm_glowcolor_minbrightness", "100", "Lowest brightness value for glowcolor.", 0, true, 0.0, true, 255.0);
 
 	LoadConfig();
 
@@ -194,8 +203,12 @@ public Action Command_GlowColors(int client, int args)
 	if(args < 1)
 	{
 		DisplayGlowColorMenu(client);
+		return Plugin_Handled;
 	}
-	else if(args == 1)
+
+	int Color;
+
+	if(args == 1)
 	{
 		char sColorString[32];
 		GetCmdArgString(sColorString, sizeof(sColorString));
@@ -206,15 +219,11 @@ public Action Command_GlowColors(int client, int args)
 			return Plugin_Handled;
 		}
 
-		int Color = StringToInt(sColorString, 16);
+		Color = StringToInt(sColorString, 16);
 
 		g_aGlowColor[client][0] = (Color >> 16) & 0xFF;
 		g_aGlowColor[client][1] = (Color >> 8) & 0xFF;
 		g_aGlowColor[client][2] = (Color >> 0) & 0xFF;
-		ApplyGlowColor(client);
-
-		if(GetCmdReplySource() == SM_REPLY_TO_CHAT)
-			PrintToChat(client, "\x01[SM] Set color to: \x07%06X%06X\x01", Color, Color);
 	}
 	else if(args == 3)
 	{
@@ -228,21 +237,24 @@ public Action Command_GlowColors(int client, int args)
 		}
 
 		ColorStringToArray(sColorString, g_aGlowColor[client]);
-		ApplyGlowColor(client);
 
-		int Color = (g_aGlowColor[client][0] << 16) +
-					(g_aGlowColor[client][1] << 8) +
-					(g_aGlowColor[client][2] << 0);
-
-		if(GetCmdReplySource() == SM_REPLY_TO_CHAT)
-			PrintToChat(client, "\x01[SM] Set color to: \x07%06X%06X\x01", Color, Color);
+		Color = (g_aGlowColor[client][0] << 16) +
+				(g_aGlowColor[client][1] << 8) +
+				(g_aGlowColor[client][2] << 0);
 	}
 	else
 	{
 		char sCommand[32];
 		GetCmdArg(0, sCommand, sizeof(sCommand));
 		PrintToChat(client, "[SM] Usage: %s <RRGGBB HEX | 0-255 0-255 0-255 RGB CODE>", sCommand);
+		return Plugin_Handled;
 	}
+
+	if(!ApplyGlowColor(client))
+		return Plugin_Handled;
+
+	if(GetCmdReplySource() == SM_REPLY_TO_CHAT)
+		PrintToChat(client, "\x01[SM] Set color to: \x07%06X%06X\x01", Color, Color);
 
 	return Plugin_Handled;
 }
@@ -293,7 +305,12 @@ public int MenuHandler_GlowColorsMenu(Menu menu, MenuAction action, int param1, 
 			menu.GetItem(param2, aItem, sizeof(aItem));
 
 			ColorStringToArray(aItem, g_aGlowColor[param1]);
+			int Color = (g_aGlowColor[param1][0] << 16) +
+				(g_aGlowColor[param1][1] << 8) +
+				(g_aGlowColor[param1][2] << 0);
+
 			ApplyGlowColor(param1);
+			PrintToChat(param1, "\x01[SM] Set color to: \x07%06X%06X\x01", Color, Color);
 		}
 	}
 }
@@ -304,7 +321,7 @@ public void Event_ApplyGlowcolor(Event event, const char[] name, bool dontBroadc
 	if(!client)
 		return;
 
-	RequestFrame(ApplyGlowColor, client);
+	RequestFrame(view_as<RequestFrameCallback>(ApplyGlowColor), client);
 }
 
 public int ZR_OnClientInfected(int client, int attacker, bool motherInfect, bool respawnOverride, bool respawn)
@@ -317,10 +334,28 @@ public int ZR_OnClientHumanPost(int client, bool respawn, bool protect)
 	ApplyGlowColor(client);
 }
 
-void ApplyGlowColor(int client)
+bool ApplyGlowColor(int client)
 {
-	if(IsClientInGame(client) && IsPlayerAlive(client))
+	if(!IsClientInGame(client))
+		return false;
+
+	bool Ret = true;
+	int Brightness = ColorBrightness(g_aGlowColor[client][0], g_aGlowColor[client][1], g_aGlowColor[client][2]);
+	if(Brightness < g_Cvar_MinBrightness.IntValue)
+	{
+		PrintToChat(client, "Your glowcolor is too dark! (brightness = %d/255, allowed values are >= %d)",
+			Brightness, g_Cvar_MinBrightness.IntValue);
+
+		g_aGlowColor[client][0] = 255;
+		g_aGlowColor[client][1] = 255;
+		g_aGlowColor[client][2] = 255;
+		Ret = false;
+	}
+
+	if(IsPlayerAlive(client))
 		ToolsSetEntityColor(client, g_aGlowColor[client][0], g_aGlowColor[client][1], g_aGlowColor[client][2]);
+
+	return Ret;
 }
 
 stock void ToolsGetEntityColor(int entity, int aColor[4])
@@ -366,14 +401,23 @@ stock void ColorStringToArray(const char[] sColorString, int aColor[3])
 
 stock bool IsValidRGBNum(char[] sString)
 {
-	if(SimpleRegexMatch(sString, "^([01]?[0-9]?[0-9]|2[0-4][0-9]|25[0-5])$") == 2)
+	if(g_Regex_RGB.Match(sString) > 0)
 		return true;
 	return false;
 }
 
 stock bool IsValidHex(char[] sString)
 {
-	if(SimpleRegexMatch(sString, "^(#?)([A-Fa-f0-9]{6})$") == 0)
-		return false;
-	return true;
+	if(g_Regex_HEX.Match(sString) > 0)
+		return true;
+	return false;
+}
+
+stock int ColorBrightness(int Red, int Green, int Blue)
+{
+	// http://www.nbdtech.com/Blog/archive/2008/04/27/Calculating-the-Perceived-Brightness-of-a-Color.aspx
+	return RoundToFloor(SquareRoot(
+		Red * Red * 0.241 +
+		Green * Green + 0.691 +
+		Blue * Blue + 0.068));
 }
