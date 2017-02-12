@@ -161,7 +161,7 @@ stock bool KickValidClient(const char[] sName, const char[] sSteam32ID, AdminId 
 		/* Spectators
 		 * Sort by idle time and also kick donators if IdleTime > 30
 		 */
-		if(GetClientTeam(client) == CS_TEAM_SPECTATOR)
+		if(GetClientTeam(client) <= CS_TEAM_SPECTATOR)
 		{
 			if(!Donator || IdleTime > 30)
 			{
@@ -177,7 +177,7 @@ stock bool KickValidClient(const char[] sName, const char[] sSteam32ID, AdminId 
 		/* Dead non-donator with IdleTime > 30
 		 * Sort by idle time and don't kick donators.
 		 */
-		if(!Donator && GetClientTeam(client) != CS_TEAM_SPECTATOR && !IsPlayerAlive(client))
+		if(!Donator && GetClientTeam(client) > CS_TEAM_SPECTATOR && !IsPlayerAlive(client))
 		{
 			if(IdleTime > 30 && IdleTime > HighestValue[1])
 			{
